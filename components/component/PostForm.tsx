@@ -22,7 +22,7 @@ export default function PostForm() {
       // まず、ユーザーが存在するか確認
       const user = await prisma.user.findUnique({
         where: {
-          id: userId
+          clerkId: userId
         }
       });
    
@@ -36,7 +36,7 @@ export default function PostForm() {
       await prisma.post.create({
         data: {
           content: postText,
-          authorId: userId,
+          authorId: user.id,
         },
       });
     } catch (err) {
