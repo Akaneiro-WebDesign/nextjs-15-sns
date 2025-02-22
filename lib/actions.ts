@@ -20,6 +20,8 @@ export async function addPostAction(formData: FormData) {
      
       const validatedPostText = postTextSchema.parse(postText);
 
+      await new Promise((resolve) => setTimeout(resolve, 3000));
+
       // まず、ユーザーが存在するか確認
       const user = await prisma.user.findUnique({
         where: {
@@ -40,6 +42,12 @@ export async function addPostAction(formData: FormData) {
           authorId: user.id,
         },
       });
+
+      return {
+        error: undefined,
+        success: true,
+      };
+
     } catch (error) {
       if(error instanceof z.ZodError){
         return {
