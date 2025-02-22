@@ -1,48 +1,26 @@
-// components/PostForm.tsx
+'use client';
+
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { SendIcon } from "./Icons";
 import prisma from "@/lib/prisma";
 import { auth } from "@clerk/nextjs/server";
+import { z } from "zod";
+import { useState } from "react";
+import { addPostAction } from "@/lib/actions";
 
 export default function PostForm() {
-  const { userId } = auth();
+  const [error, setError] = useState<string | undefined>("");
 
-  async function addPostAction(formData: FormData) {
-    "use server";
-    const postText = formData.get("post") as string;
-   
-    if (!userId) {
-      console.log("No userId found");
-      return;
-    }
-   
-    try {
-      // まず、ユーザーが存在するか確認
-      const user = await prisma.user.findUnique({
-        where: {
-          clerkId: userId
-        }
-      });
-   
-      if (!user) {
-        console.log("User not found in database");
-        // ユーザーを作成するか、エラーを返す
-        return;
+  const handleSubmit = async (formData: FormData) => {
+      const result = await addPostAction(formData);
+      if (!result?.success) {
+        setError(result?.error);
+      } else {
+        setError("");
       }
-   
-      // ポストを作成
-      await prisma.post.create({
-        data: {
-          content: postText,
-          authorId: user.id,
-        },
-      });
-    } catch (err) {
-      console.log("Error details:", err);
-    }
-  }
+  };
   
   return (
     <div className="flex items-center gap-4">
@@ -50,7 +28,7 @@ export default function PostForm() {
         <AvatarImage src="/placeholder-user.jpg" />
         <AvatarFallback>AC</AvatarFallback>
       </Avatar>
-      <form action={addPostAction} className="flex items-center flex-1">
+      <form action={handleSubmit} className="flex items-center flex-1">
       <Input
         type="text"
         placeholder="What's on your mind?"
@@ -62,6 +40,8 @@ export default function PostForm() {
         <span className="sr-only">Tweet</span>
       </Button>
       </form>
+
+      {error && <p className="text-red-500 mt-1 ml014">{error}</p>}
     </div>
   );
 }
