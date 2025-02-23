@@ -40,27 +40,28 @@ export default async function PostList() {
         in: [userId],
       },
     },
-    include: {
-      author: true,
-      likes: {
-        select: {
-          userId: true,
+      include: {
+        author: true,
+        likes: {
+          select: {
+            userId: true,
+          },
         },
+        _count: {
+          select: {
+            replies: true,
+          },
+        },
+        replies: { include: { user: true } },
       },
-      _count: {
-        select: {
-          replies: true,
-        },
-    },
-  },
   orderBy: {
     createdAt: "desc",
   },
-});
+}) as any;
 
   return (
     <div className="space-y-4">
-      {posts.map((post) => (
+      {posts.map((post: any) => (
         <div
           key={post.id}
           className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4"
@@ -92,19 +93,19 @@ export default async function PostList() {
             </div>
             <div className="flex items-center gap-2 text-muted-foreground">
               <ClockIcon className="h-5 w-5" />
-              <span>{post.timestamp}</span>
+              <span>{new Date(post.createdAt).toLocaleString()}</span>
             </div>
           </div>
-          {post.comments && (
+          {post.replies && (
             <div className="mt-4 border-t pt-4 space-y-2">
-              {post.comments.map((comment, index) => (
+              {post.replies.map((comment: any, index: number) => (
                 <div key={index} className="flex items-center gap-4">
                   <Avatar className="w-8 h-8">
                     <AvatarImage src="/placeholder-user.jpg" />
                     <AvatarFallback>AC</AvatarFallback>
                   </Avatar>
                   <div className="flex-1">
-                    <p className="font-medium">{comment.author}</p>
+                    <p className="font-medium">{comment.user.name}</p>
                     <p className="text-muted-foreground">{comment.content}</p>
                   </div>
                   <Button variant="ghost" size="icon">

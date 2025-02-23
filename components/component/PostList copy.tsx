@@ -29,7 +29,7 @@ export default async function PostList() {
   let posts = [];
 
   const { userId } = auth();
-
+  console.log("userId:", userId); // デバッグ用
   if(!userId){
     return;
   }
