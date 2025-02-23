@@ -4,13 +4,21 @@ import { auth } from "@clerk/nextjs/server";
 import { z } from "zod";
 import prisma from "./prisma";
 
-export async function addPostAction(formData: FormData) {   
+type State = {
+    error? : string | undefined;
+    success: boolean;
+}
+
+export async function addPostAction(
+    prevState: State,
+    formData: FormData
+    ): Promise<State>{   
     try {
       const { userId } = auth();
 
       if (!userId) {
         // console.log("No userId found");
-        return;
+        return{error: "ユーザーが存在しません。", success: false};
       }
       const postText = formData.get("post") as string;
       const postTextSchema = z
@@ -20,7 +28,7 @@ export async function addPostAction(formData: FormData) {
      
       const validatedPostText = postTextSchema.parse(postText);
 
-      await new Promise((resolve) => setTimeout(resolve, 3000));
+    //   await new Promise((resolve) => setTimeout(resolve, 3000));
 
       // まず、ユーザーが存在するか確認
       const user = await prisma.user.findUnique({
