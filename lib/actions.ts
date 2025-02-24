@@ -40,7 +40,7 @@ export async function addPostAction(
       if (!user) {
         console.log("User not found in database");
         // ユーザーを作成するか、エラーを返す
-        return;
+        return { error: "ユーザーが存在しません。", success: false };
       }
    
       // ポストを作成
