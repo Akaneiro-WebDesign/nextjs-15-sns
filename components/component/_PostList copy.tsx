@@ -29,34 +29,46 @@ export default async function PostList() {
   let posts = [];
 
   const { userId } = auth();
+  console.log("userId:", userId); // デバッグ用
+
   if (!userId) {
-    return;
+    console.log("No userId found");
+    return <div>No user found</div>;
   }
 
-  //SSR
-  posts = await prisma.post.findMany({
-    where: {
-      authorId: {
-        in: [userId],
-      },
-    },
-    include: {
-     author: true,
-     likes: {
-      select: {
-        userId: true,
+  try {
+    posts = await prisma.post.findMany({
+      where: {
+        authorId: {
+          in: [userId],
         },
       },
-    _count:{
-      select: {
-        replies: true,
+      include: {
+        author: true,
+        likes: {
+          select: {
+            userId: true,
+          },
+        },
+        _count: {
+          select: {
+            replies: true,
+          },
         },
       },
-    },
       orderBy: {
         createdAt: "desc",
-    },
-  });
+      },
+    });
+    console.log("posts:", posts); // デバッグ用
+  } catch (error) {
+    console.error("Error fetching posts:", error);
+    return <div>Error fetching posts</div>;
+  }
+
+  if (posts.length === 0) {
+    return <div>No posts found</div>;
+  }
   
   return (
     <div className="space-y-4">
@@ -95,7 +107,7 @@ export default async function PostList() {
               <span>{post.timestamp}</span>
             </div>
           </div>
-          {/* {post.comments && (
+          {post.comments && (
             <div className="mt-4 border-t pt-4 space-y-2">
               {post.comments.map((comment, index) => (
                 <div key={index} className="flex items-center gap-4">
@@ -113,7 +125,7 @@ export default async function PostList() {
                 </div>
               ))}
             </div>
-          )} */}
+          )}
         </div>
       ))}
     </div>
