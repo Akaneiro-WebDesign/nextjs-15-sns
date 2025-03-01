@@ -3,18 +3,40 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { HeartIcon, MessageCircleIcon, Share2Icon, ClockIcon } from "./Icons";
 import  prisma  from "@/lib/prisma";
-import { revalidatePath } from "next/cache";
-import { fetchPosts } from "@/lib/postDataFetcher";
 import { auth } from "@clerk/nextjs/server";
 
 export default async function PostList() {
-  const { userId } = auth();
+  let posts = [];
 
+  const { userId } = auth();
   if (!userId) {
     return;
   }
 
-  const posts = await fetchPosts(userId);
+  //SSR
+  posts = await prisma.post.findMany({
+    where: {
+      authorId: {
+        in: [userId],
+      },
+    },
+    include: {
+     author: true,
+     likes: {
+      select: {
+        userId: true,
+        },
+      },
+    _count:{
+      select: {
+        replies: true,
+        },
+      },
+    },
+      orderBy: {
+        createdAt: "desc",
+    },
+  });
   
   return (
     <div className="space-y-4">
@@ -53,6 +75,25 @@ export default async function PostList() {
               <span>{post.createdAt.toLocaleString()}</span>
             </div>
           </div>
+          {/* {post.comments && (
+            <div className="mt-4 border-t pt-4 space-y-2">
+              {post.comments.map((comment, index) => (
+                <div key={index} className="flex items-center gap-4">
+                  <Avatar className="w-8 h-8">
+                    <AvatarImage src="/placeholder-user.jpg" />
+                    <AvatarFallback>AC</AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1">
+                    <p className="font-medium">{comment.author}</p>
+                    <p className="text-muted-foreground">{comment.content}</p>
+                  </div>
+                  <Button variant="ghost" size="icon">
+                    <HeartIcon className="h-5 w-5 text-muted-foreground" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )} */}
         </div>
       ))}
     </div>
