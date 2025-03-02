@@ -1,14 +1,19 @@
 "use client";
 
-import React, { FormEvent, useState } from "react";
+import React, { FormEvent, useOptimistic, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { HeartIcon, MessageCircleIcon, Share2Icon, ClockIcon } from "./Icons";
 import prisma from "@/lib/prisma";
-import  { auth } from "@clerk/nextjs/server";
+import  { auth } from "@clerk/nextjs/server";	
 import { revalidatePath } from "next/cache";
-import { useAuth } from "@clerk/nextjs";
 import { likeAction } from "@/lib/actions";
+import { useAuth } from "@clerk/nextjs";
+
+interface LikeState {
+    likeCount: number;
+    isLiked: boolean;
+}
 
 type PostInteractionProps = {
     postId: string;
@@ -21,38 +26,41 @@ const PostInteraction = ({
     initialLikes,
     commentNumber,
 }: PostInteractionProps) => {
-    const { userId } = useAuth()
+    const { userId } = useAuth();
 
-    const [likeState, setLikeState] = useState({
+    const initialState = {
         likeCount: initialLikes.length,
-         isLiked: userId ? initialLikes.includes(userId): false,
-        });
+        isLiked: userId ? initialLikes.includes(userId): false,
+    };
 
-    const handleLikeSubmit = async (e: FormEvent) => {
-        e.preventDefault();
+    const [optimisticLike, addOptimisticLike] = useOptimistic<LikeState, void>(
+        initialState,
+        (currentState) => ({
+        //updateFn
+        likeCount: currentState.isLiked
+        ? currentState.likeCount - 1
+        : currentState.likeCount + 1,
+        isLiked: !currentState.isLiked,
+    })
+);
+
+    const handleLikeSubmit = async () => {
         try {
-            setLikeState((prev) => ({
-                likeCount: prev.isLiked ? prev.likeCount - 1 :prev.likeCount + 1,
-                isLiked: !prev.isLiked,
-            }));
+            addOptimisticLike();
             await likeAction(postId);
         } catch (err) {
-            setLikeState((prev) => ({
-                likeCount: prev.isLiked ? prev.likeCount + 1 :prev.likeCount - 1,
-                isLiked: !prev.isLiked,
-            }));
             console.error(err);
         }
     };
 
     return (
         <div className="flex items-center">
-            <form onSubmit={handleLikeSubmit}>
+            <form action={handleLikeSubmit}>
             <Button variant="ghost" size="icon">
                 <HeartIcon className="h-5 w-5 text-muted-foreground" />
             </Button>
             </form>
-        <span className="-ml-1 text-destructive">{likeState.likeCount}</span>
+        <span className="-ml-1 text-destructive">{optimisticLike.likeCount}</span>
             <Button variant="ghost" size="icon">
                 <MessageCircleIcon className="h-5 w-5 text-muted-foreground" />
         </Button>
@@ -61,7 +69,7 @@ const PostInteraction = ({
                 <Share2Icon className="h-5 w-5 text-muted-foreground" />
         </Button>
         </div>
-    )
-}
+    );
+};
 
 export default PostInteraction;
