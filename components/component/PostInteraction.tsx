@@ -20,43 +20,51 @@ const PostInteraction = ({
     const likeAction = async () => {
         "use server";
         console.log(postId);
-
-        const { userId } = auth();
-
-            if(!userId) {
-                throw new Error("User is not authenticated");
-            }
+    
+        const { userId: clerkUserId } = auth();
+    
+        if (!clerkUserId) {
+            throw new Error("ユーザーが認証されていません");
+        } 
+    
         try {
+            // まずデータベースでユーザーを検索
+            const user = await prisma.user.findUnique({
+                where: {
+                    clerkId: clerkUserId,
+                },
+            });
             
+            if (!user) {
+                throw new Error("ユーザーがデータベースに見つかりません");
+            }
             const existingLike = await prisma.like.findFirst({
                 where: {
                     postId,
-                    userId,
+                    userId: user.id, // PrismaのユーザーIDを使用
                 },
             });
-
+    
             if (existingLike) {
                 await prisma.like.delete({
                     where: {
                         id: existingLike.id,
                     },
                 });
-
                 revalidatePath("/");
             } else {
                 await prisma.like.create({
                     data: {
                         postId,
-                        userId,
+                        userId: user.id, // PrismaのユーザーIDを使用
                     },
                 });
                 revalidatePath("/");
             }
-            } catch (err) {
-                console.log(err);
+        } catch (err) {
+            console.log(err);
         }
     };
-
 
     return (
         <div className="flex items-center">
