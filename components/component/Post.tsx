@@ -11,7 +11,7 @@ const Post = ({ post }: any) => {
       >
         <div className="flex items-center gap-4 mb-4">
           <Avatar className="w-10 h-10">
-            <AvatarImage src="/placeholder-user.jpg" />
+            <AvatarImage src={post.author.image} />
             <AvatarFallback>AC</AvatarFallback>
           </Avatar>
           <div>

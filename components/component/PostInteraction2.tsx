@@ -35,18 +35,21 @@ const PostInteraction = ({
 
     const [optimisticLike, addOptimisticLike] = useOptimistic<LikeState, void>(
         initialState,
-        (currentState) => ({
-        //updateFn
-        likeCount: currentState.isLiked
-        ? currentState.likeCount - 1
-        : currentState.likeCount + 1,
-        isLiked: !currentState.isLiked,
-    })
+        (currentState) => (
+            // if (currentState.likeCount < ) 
+            {
+                //updateFn
+                likeCount: currentState.isLiked && currentState.likeCount > 1
+                ? currentState.likeCount - 1
+                : currentState.likeCount + 1,
+                isLiked: !currentState.isLiked,
+            }
+)
 );
 
     const handleLikeSubmit = async () => {
-        addOptimisticLike();
         try {
+            addOptimisticLike();
             await likeAction(postId);
         } catch (err) {
             console.error(err);
@@ -55,14 +58,22 @@ const PostInteraction = ({
 
     return (
         <div className="flex items-center">
-            <form onSubmit={handleLikeSubmit}>
-            <Button type="submit" variant="ghost" size="icon">
-            <HeartIcon className={`h-5 w-5 ${
-                        optimisticLike.isLiked ? "text-destructive" : "text-muted-foreground"
-                    }`} />
+            <form action={handleLikeSubmit}>
+            <Button variant="ghost" size="icon">
+                <HeartIcon
+                className={`h-5 w-5 ${
+                    optimisticLike.isLiked
+                    ? "text-destructive"
+                    : "text-mured-foreground"
+                    }`}
+                    />
             </Button>
             </form>
-        <span className="-ml-1 text-destructive">{optimisticLike.likeCount}</span>
+        <span
+            className={`-ml-1 ${optimisticLike.isLiked ? "text-destructive" :""}`}
+            >
+            {optimisticLike.likeCount}
+        </span>
             <Button variant="ghost" size="icon">
                 <MessageCircleIcon className="h-5 w-5 text-muted-foreground" />
         </Button>
